@@ -11,14 +11,15 @@ def testWords(prefix,joint,suffix):
                   portmanteau == prefix+'s',
                   portmanteau == prefix+'ed',
                   portmanteau == prefix+'ly',
+                  portmanteau == prefix+'es',
+                  portmanteau == prefix+'r',
                   suffix == joint+'ing',
                   suffix == joint+'s',
                   suffix == joint+'d',
                   suffix == joint+'ed',
                   suffix == joint+'ly']
-    print conditions
     for condition in conditions:
-       if not condition:
+       if condition:
           return False
     return True
 
@@ -44,8 +45,7 @@ def GetPortmanteau(N):
         try:
             prefix = random.choice(lastNs[joint])
             suffix = random.choice(firstNs[joint])
-            if not ((prefix in suffix) or (suffix in prefix) or (suffix == joint+'ing') or (suffix == joint+'s') or (suffix == joint+'ed')):
-            #if testWords(prefix,joint,suffix):
+            if testWords(prefix,joint,suffix):
                 found = True
         except KeyError:
             continue
