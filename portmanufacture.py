@@ -1,6 +1,27 @@
 import random
 import tweepy, time
 
+def testWords(prefix,joint,suffix):
+    portmanteau = prefix[:-N]+suffix
+    conditions = [prefix in suffix,
+                  suffix in prefix,
+                  portmanteau == prefix+'d',
+                  portmanteau == prefix+'e',
+                  portmanteau == prefix+'ing',
+                  portmanteau == prefix+'s',
+                  portmanteau == prefix+'ed',
+                  portmanteau == prefix+'ly',
+                  suffix == joint+'ing',
+                  suffix == joint+'s',
+                  suffix == joint+'d',
+                  suffix == joint+'ed',
+                  suffix == joint+'ly']
+    print conditions
+    for condition in conditions:
+       if not condition:
+          return False
+    return True
+
 def GetPortmanteau(N):
     f = open('words.txt','r')
     words = []
@@ -23,7 +44,8 @@ def GetPortmanteau(N):
         try:
             prefix = random.choice(lastNs[joint])
             suffix = random.choice(firstNs[joint])
-            if not ((prefix in suffix) or (suffix in prefix)):
+            if not ((prefix in suffix) or (suffix in prefix) or (suffix == joint+'ing') or (suffix == joint+'s') or (suffix == joint+'ed')):
+            #if testWords(prefix,joint,suffix):
                 found = True
         except KeyError:
             continue
@@ -45,5 +67,5 @@ N = 5
 while Going:
     prefix,suffix,portmanteau = GetPortmanteau(N)
     print prefix, suffix, portmanteau
-    api.update_status(prefix+' + '+suffix+' = '+portmanteau)
+    api.update_status(prefix+' + '+suffix+' = '+portmanteau+' #portmanteau')
     time.sleep(3600) # Sleep for 1 hour (3600 seconds)
