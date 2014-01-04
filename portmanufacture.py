@@ -13,6 +13,11 @@ def testWords(prefix,joint,suffix):
                   portmanteau == prefix+'ly',
                   portmanteau == prefix+'es',
                   portmanteau == prefix+'r',
+                  portmanteau == prefix+'er',
+                  portmanteau == prefix+'est',
+                  portmanteau == prefix+'iest',
+                  portmanteau == prefix+'ier',
+                  portmanteau == prefix+'able',
                   suffix == joint+'ing',
                   suffix == joint+'s',
                   suffix == joint+'d',
@@ -23,21 +28,26 @@ def testWords(prefix,joint,suffix):
           return False
     return True
 
-def GetPortmanteau(N):
+def GetPortmanteau(N, trends=None):
     f = open('words.txt','r')
-    words = []
     firstNs,lastNs = {},{}
     for line in f:
         word = line.rstrip().decode('utf-8')
-        words.append(word)
         try:
             firstNs[word[:N]].append(word)
         except:
             firstNs[word[:N]] = [word]
-        try:
-            lastNs[word[-N:]].append(word)
-        except:
-            lastNs[word[-N:]] = [word]
+        if trends == None:
+            try:
+                lastNs[word[-N:]].append(word)
+            except:
+                lastNs[word[-N:]] = [word]
+    if trends != None:
+        for trend in trends:
+            try:
+                lastNs[trend[-N:]].append(trend)
+            except:
+                lastNs[trend[-N:]] = [trend]
 
     found = False
     while not found:
@@ -63,9 +73,22 @@ auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
 api = tweepy.API(auth)
 
 Going = True
-N = 5
+DoTrends = False
+count = 0
 while Going:
-    prefix,suffix,portmanteau = GetPortmanteau(N)
+    N = random.randint(3,5)
+    if count % 12 == 0:
+        DoTrends = True
+    if DoTrends:
+        trends = [x['name'] for x in api.trends_place(23424977)[0]['trends'] if '#' not in x['name']] # US Trends
+        prefix,suffix,portmanteau = GetPortmanteau(N, trends)
+        DoTrends = False
+    else:
+        prefix,suffix,portmanteau = GetPortmanteau(N)
     print prefix, suffix, portmanteau
+    f = open('ports.txt','a')
+    f.write(prefix+' '+suffix+' '+portmanteau+'\n')
+    f.close()
     api.update_status(prefix+' + '+suffix+' = '+portmanteau+' #portmanteau')
+    count += 1
     time.sleep(3600) # Sleep for 1 hour (3600 seconds)
