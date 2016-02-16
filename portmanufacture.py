@@ -50,6 +50,7 @@ def GetPortmanteau(N, trends=None):
                 lastNs[trend[-N:]] = [trend]
 
     found = False
+    count = 0
     while not found:
         joint = random.choice(lastNs.keys())
         try:
@@ -59,6 +60,10 @@ def GetPortmanteau(N, trends=None):
                 found = True
         except KeyError:
             continue
+        count += 1
+        if count > 2*len(lastNs.keys()):
+            suffix = ''
+            found = True
 
     return prefix, suffix, prefix[:-N]+suffix
 
@@ -74,21 +79,31 @@ api = tweepy.API(auth)
 
 Going = True
 DoTrends = False
+NoneFound = True
 count = 0
 while Going:
-    N = random.randint(3,5)
-    if count % 12 == 0:
+    N = random.randint(2,4)
+    if count % 6 == 0:
         DoTrends = True
     if DoTrends:
         trends = [x['name'] for x in api.trends_place(23424977)[0]['trends'] if '#' not in x['name']] # US Trends
         prefix,suffix,portmanteau = GetPortmanteau(N, trends)
-        DoTrends = False
+        if suffix == '':
+            NoneFound = True
+            DoTrends = True
+        else:
+            NoneFound = False
+            DoTrends = False
     else:
         prefix,suffix,portmanteau = GetPortmanteau(N)
-    print prefix, suffix, portmanteau
-    f = open('ports.txt','a')
-    f.write(prefix+' '+suffix+' '+portmanteau+'\n')
-    f.close()
-    api.update_status(prefix+' + '+suffix+' = '+portmanteau+' #portmanteau')
-    count += 1
-    time.sleep(3600) # Sleep for 1 hour (3600 seconds)
+    print prefix,suffix,portmanteau
+    if not NoneFound:
+        try:
+            f = open('ports.txt','a')
+            f.write(prefix+' '+suffix+' '+portmanteau+'\n')
+            f.close()
+            api.update_status(prefix+' + '+suffix+' = '+portmanteau+' #portmanteau')
+            count += 1
+            time.sleep(7200) # Sleep for 2 hours (7200 seconds)
+        except tweepy.TweepError as e:
+            print 'ERROR: ', e
