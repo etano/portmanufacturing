@@ -3,26 +3,28 @@ import tweepy, time
 
 def testWords(prefix,joint,suffix):
     portmanteau = prefix[:-N]+suffix
-    conditions = [prefix in suffix,
-                  suffix in prefix,
-                  portmanteau == prefix+'d',
-                  portmanteau == prefix+'e',
-                  portmanteau == prefix+'ing',
-                  portmanteau == prefix+'s',
-                  portmanteau == prefix+'ed',
-                  portmanteau == prefix+'ly',
-                  portmanteau == prefix+'es',
-                  portmanteau == prefix+'r',
-                  portmanteau == prefix+'er',
-                  portmanteau == prefix+'est',
-                  portmanteau == prefix+'iest',
-                  portmanteau == prefix+'ier',
-                  portmanteau == prefix+'able',
-                  suffix == joint+'ing',
-                  suffix == joint+'s',
-                  suffix == joint+'d',
-                  suffix == joint+'ed',
-                  suffix == joint+'ly']
+    conditions = [
+        prefix in suffix,
+        suffix in prefix,
+        portmanteau == prefix+'d',
+        portmanteau == prefix+'e',
+        portmanteau == prefix+'ing',
+        portmanteau == prefix+'s',
+        portmanteau == prefix+'ed',
+        portmanteau == prefix+'ly',
+        portmanteau == prefix+'es',
+        portmanteau == prefix+'r',
+        portmanteau == prefix+'er',
+        portmanteau == prefix+'est',
+        portmanteau == prefix+'iest',
+        portmanteau == prefix+'ier',
+        portmanteau == prefix+'able',
+        suffix == joint+'ing',
+        suffix == joint+'s',
+        suffix == joint+'d',
+        suffix == joint+'ed',
+        suffix == joint+'ly'
+    ]
     for condition in conditions:
        if condition:
           return False
@@ -69,6 +71,7 @@ def GetPortmanteau(N, trends=None):
 
 f = open('auth.txt')
 lines = [x.rstrip() for x in f.readlines()]
+print lines
 CONSUMER_KEY = lines[0] # To get this stuff, sign in at https://dev.twitter.com/ and Create a New Application
 CONSUMER_SECRET = lines[1] # Make sure access level is Read And Write in the Settings tab
 ACCESS_KEY = lines[2] # Create a new Access Token
@@ -81,7 +84,7 @@ Going = True
 DoTrends = False
 NoneFound = True
 count = 0
-while Going:
+while NoneFound:
     N = random.randint(2,4)
     if count % 6 == 0:
         DoTrends = True
@@ -96,7 +99,7 @@ while Going:
             DoTrends = False
     else:
         prefix,suffix,portmanteau = GetPortmanteau(N)
-    print prefix,suffix,portmanteau
+    print DoTrends, prefix, suffix, portmanteau
     if not NoneFound:
         try:
             f = open('ports.txt','a')
@@ -104,6 +107,5 @@ while Going:
             f.close()
             api.update_status(prefix+' + '+suffix+' = '+portmanteau+' #portmanteau')
             count += 1
-            time.sleep(7200) # Sleep for 2 hours (7200 seconds)
         except tweepy.TweepError as e:
             print 'ERROR: ', e
