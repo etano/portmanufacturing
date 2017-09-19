@@ -1,5 +1,6 @@
-import random
-import tweepy, time
+import os, random, time, tweepy
+
+dir = os.path.dirname(os.path.abspath(__file__))
 
 def testWords(prefix,joint,suffix):
     portmanteau = prefix[:-N]+suffix
@@ -31,7 +32,7 @@ def testWords(prefix,joint,suffix):
     return True
 
 def GetPortmanteau(N, trends=None):
-    f = open('words.txt','r')
+    f = open(dir+'/words.txt','r')
     firstNs,lastNs = {},{}
     for line in f:
         word = line.rstrip().decode('utf-8')
@@ -69,9 +70,8 @@ def GetPortmanteau(N, trends=None):
 
     return prefix, suffix, prefix[:-N]+suffix
 
-f = open('auth.txt')
+f = open(dir+'/auth.txt')
 lines = [x.rstrip() for x in f.readlines()]
-print lines
 CONSUMER_KEY = lines[0] # To get this stuff, sign in at https://dev.twitter.com/ and Create a New Application
 CONSUMER_SECRET = lines[1] # Make sure access level is Read And Write in the Settings tab
 ACCESS_KEY = lines[2] # Create a new Access Token
@@ -86,8 +86,8 @@ NoneFound = True
 count = 0
 while NoneFound:
     N = random.randint(2,4)
-    if count % 6 == 0:
-        DoTrends = True
+    #if count % 6 == 0:
+    #    DoTrends = True
     if DoTrends:
         trends = [x['name'] for x in api.trends_place(23424977)[0]['trends'] if '#' not in x['name']] # US Trends
         prefix,suffix,portmanteau = GetPortmanteau(N, trends)
@@ -99,10 +99,11 @@ while NoneFound:
             DoTrends = False
     else:
         prefix,suffix,portmanteau = GetPortmanteau(N)
+        NoneFound = False
     print DoTrends, prefix, suffix, portmanteau
     if not NoneFound:
         try:
-            f = open('ports.txt','a')
+            f = open(dir+'/ports.txt','a')
             f.write(prefix+' '+suffix+' '+portmanteau+'\n')
             f.close()
             api.update_status(prefix+' + '+suffix+' = '+portmanteau+' #portmanteau')
