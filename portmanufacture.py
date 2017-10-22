@@ -106,7 +106,7 @@ while NoneFound:
             f = open(dir+'/ports.txt','a')
             f.write(prefix+' '+suffix+' '+portmanteau+'\n')
             f.close()
-            api.update_status(prefix+' + '+suffix+' = '+portmanteau+' #portmanteau')
+            api.update_status('#'+prefix+' + #'+suffix+' = #'+portmanteau)
             count += 1
         except tweepy.TweepError as e:
             print 'ERROR: ', e
