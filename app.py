@@ -35,7 +35,7 @@ def GetPortmanteau(N, trends=None):
     f = open(dir+'/words.txt','r')
     firstNs,lastNs = {},{}
     for line in f:
-        word = line.rstrip().decode('utf-8')
+        word = line.rstrip()
         try:
             firstNs[word[:N]].append(word)
         except:
@@ -100,7 +100,7 @@ while NoneFound:
     else:
         prefix,suffix,portmanteau = GetPortmanteau(N)
         NoneFound = False
-    print DoTrends, prefix, suffix, portmanteau
+    print(DoTrends, prefix, suffix, portmanteau)
     if not NoneFound:
         try:
             f = open(dir+'/ports.txt','a')
@@ -109,4 +109,4 @@ while NoneFound:
             api.update_status('#'+prefix+' + #'+suffix+' = #'+portmanteau)
             count += 1
         except tweepy.TweepError as e:
-            print 'ERROR: ', e
+            print('ERROR: ', e)
