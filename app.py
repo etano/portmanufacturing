@@ -86,6 +86,7 @@ def main():
                 twitter_client.update_status(tweet)
             except tweepy.TweepError:
                 log.exception("tweepy failed on tweet: %s", tweet)
+            break
 
 
 if __name__ == "__main__":
