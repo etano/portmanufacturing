@@ -1,112 +1,92 @@
-import os, random, time, tweepy
+import logging
+import random
+import sys
 
-dir = os.path.dirname(os.path.abspath(__file__))
+import tweepy
 
-def testWords(prefix,joint,suffix):
-    portmanteau = prefix[:-N]+suffix
+
+log = logging.getLogger(__name__)
+
+
+def test_words(prefix, subword, suffix, portmanteau):
     conditions = [
         prefix in suffix,
         suffix in prefix,
-        portmanteau == prefix+'d',
-        portmanteau == prefix+'e',
-        portmanteau == prefix+'ing',
-        portmanteau == prefix+'s',
-        portmanteau == prefix+'ed',
-        portmanteau == prefix+'ly',
-        portmanteau == prefix+'es',
-        portmanteau == prefix+'r',
-        portmanteau == prefix+'er',
-        portmanteau == prefix+'est',
-        portmanteau == prefix+'iest',
-        portmanteau == prefix+'ier',
-        portmanteau == prefix+'able',
-        suffix == joint+'ing',
-        suffix == joint+'s',
-        suffix == joint+'d',
-        suffix == joint+'ed',
-        suffix == joint+'ly'
+        portmanteau == prefix + "d",
+        portmanteau == prefix + "e",
+        portmanteau == prefix + "ing",
+        portmanteau == prefix + "s",
+        portmanteau == prefix + "ed",
+        portmanteau == prefix + "ly",
+        portmanteau == prefix + "es",
+        portmanteau == prefix + "r",
+        portmanteau == prefix + "er",
+        portmanteau == prefix + "est",
+        portmanteau == prefix + "iest",
+        portmanteau == prefix + "ier",
+        portmanteau == prefix + "able",
+        suffix == subword + "ing",
+        suffix == subword + "s",
+        suffix == subword + "d",
+        suffix == subword + "ed",
+        suffix == subword + "ly",
     ]
     for condition in conditions:
-       if condition:
-          return False
+        if condition:
+            return False
     return True
 
-def GetPortmanteau(N, trends=None):
-    f = open(dir+'/words.txt','r')
-    firstNs,lastNs = {},{}
-    for line in f:
-        word = line.rstrip()
-        try:
-            firstNs[word[:N]].append(word)
-        except:
-            firstNs[word[:N]] = [word]
-        if trends == None:
-            try:
-                lastNs[word[-N:]].append(word)
-            except:
-                lastNs[word[-N:]] = [word]
-    if trends != None:
-        for trend in trends:
-            try:
-                lastNs[trend[-N:]].append(trend)
-            except:
-                lastNs[trend[-N:]] = [trend]
 
-    found = False
-    count = 0
-    while not found:
-        joint = random.choice(lastNs.keys())
-        try:
-            prefix = random.choice(lastNs[joint])
-            suffix = random.choice(firstNs[joint])
-            if testWords(prefix,joint,suffix):
-                found = True
-        except KeyError:
-            continue
-        count += 1
-        if count > 2*len(lastNs.keys()):
-            suffix = ''
-            found = True
-
-    return prefix, suffix, prefix[:-N]+suffix
-
-f = open(dir+'/auth.txt')
-lines = [x.rstrip() for x in f.readlines()]
-CONSUMER_KEY = lines[0] # To get this stuff, sign in at https://dev.twitter.com/ and Create a New Application
-CONSUMER_SECRET = lines[1] # Make sure access level is Read And Write in the Settings tab
-ACCESS_KEY = lines[2] # Create a new Access Token
-ACCESS_SECRET = lines[3] # Shhhhhhhhh....
-auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
-auth.set_access_token(ACCESS_KEY, ACCESS_SECRET)
-api = tweepy.API(auth)
-
-Going = True
-DoTrends = False
-NoneFound = True
-count = 0
-while NoneFound:
-    N = random.randint(2,4)
-    #if count % 6 == 0:
-    #    DoTrends = True
-    if DoTrends:
-        trends = [x['name'] for x in api.trends_place(23424977)[0]['trends'] if '#' not in x['name']] # US Trends
-        prefix,suffix,portmanteau = GetPortmanteau(N, trends)
-        if suffix == '':
-            NoneFound = True
-            DoTrends = True
+def set_subwords(words, f):
+    d = {}
+    for word in words:
+        subword = f(word)
+        if subword in d:
+            d[subword].append(word)
         else:
-            NoneFound = False
-            DoTrends = False
-    else:
-        prefix,suffix,portmanteau = GetPortmanteau(N)
-        NoneFound = False
-    print(DoTrends, prefix, suffix, portmanteau)
-    if not NoneFound:
-        try:
-            f = open(dir+'/ports.txt','a')
-            f.write(prefix+' '+suffix+' '+portmanteau+'\n')
-            f.close()
-            api.update_status('#'+prefix+' + #'+suffix+' = #'+portmanteau)
-            count += 1
-        except tweepy.TweepError as e:
-            print('ERROR: ', e)
+            d[subword] = [word]
+    return d
+
+
+def get_portmanteau(N, first_words, second_words):
+    last_ns = set_subwords(first_words, lambda w: w[-N:])
+    first_ns = set_subwords(second_words, lambda w: w[:N])
+
+    n_trials = 2 * len(last_ns)
+    for _ in range(n_trials):
+        subword = random.choice(list(last_ns.keys()))
+        if subword not in first_ns:
+            continue
+        prefix = random.choice(last_ns[subword])
+        suffix = random.choice(first_ns[subword])
+        portmanteau = prefix[:-N] + suffix
+        if test_words(prefix, subword, suffix, portmanteau):
+            return prefix, suffix, portmanteau
+    return None, None, None
+
+
+def main():
+    twitter_consumer_key = sys.argv[1]
+    twitter_consumer_secret = sys.argv[2]
+    twitter_access_key = sys.argv[3]
+    twitter_access_secret = sys.argv[4]
+    twitter_auth = tweepy.OAuthHandler(twitter_consumer_key, twitter_consumer_secret)
+    twitter_auth.set_access_token(twitter_access_key, twitter_access_secret)
+    twitter_client = tweepy.API(twitter_auth)
+
+    with open("words.txt", "r") as f:
+        words = [line.rstrip() for line in f]
+
+    while True:
+        N = random.randint(2, 4)
+        prefix, suffix, portmanteau = get_portmanteau(N, words, words)
+        if prefix is not None and suffix is not None:
+            tweet = f"#{prefix} + #{suffix} = #{portmanteau}"
+            try:
+                twitter_client.update_status(tweet)
+            except tweepy.TweepError:
+                log.exception("tweepy failed on tweet: %s", tweet)
+
+
+if __name__ == "__main__":
+    main()
